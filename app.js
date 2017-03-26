@@ -2,7 +2,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var path = require('path');
 var expressValidator = require('express-validator');
+var mongojs = require('mongojs');
 var app = express();
+
+//Connecting to Database
+var db = mongojs('customerapp',['users']);
 
 //View Engine
 app.set('view engine', 'ejs');
@@ -12,7 +16,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static('public'));
 
-//Error Formatter
+//Global Vars
+app.use(function(req, res, next){
+	res.locals.errors = null;
+	next();
+});
+//Error Validation
 app.use(expressValidator({
   errorFormatter: function(param, msg, value) {
       var namespace = param.split('.')
@@ -30,53 +39,45 @@ app.use(expressValidator({
   }
 }));
 
-var users = [
-	{
-		id: 1,
-		first_name: "Andrew",
-		last_name: "Nguyen",
-		email: "andythenge@gmail.com"
-	},
-	{
-		id: 2,
-		first_name: "Sam",
-		last_name: "Harris",
-		email: "sam@gmail.com"
-	},
-	{
-		id: 3,
-		first_name: "Dwight",
-		last_name: "Schrute",
-		email: "schrute@gmail.com"
-	},
-	{
-		id: 4,
-		first_name: "Pam",
-		last_name: "Beasly",
-		email: "beasly@gmail.com"
-	},
-];
 
 app.get('/', function(req, res){
-	res.render('index',{title:"Customers", users: users})
+	db.users.find(function(err, docs){
+		console.log(docs);
+		res.render('index',
+		{
+			title:"Customers",
+			users: docs
+		})
+	});
 });
 
 app.post('/users/add', function(req, res){
-	var errors = req.validationErrors();
 	req.checkBody('first_name','First Name is Required').notEmpty();
 	req.checkBody('last_name','Last Name is Required').notEmpty();
 	req.checkBody('email','Email is Required').notEmpty();
 	console.log(req.body);
 
+	var errors = req.validationErrors();
 	if(errors){
+		res.render('index',
+		{
+			title:"Customers",
+			users: docs,
+			errors: errors
+		});
 		console.log("Errors");
 	} else {
-		var user = {
+		var newUser = {
 			first_name: req.body.first_name,
 			last_name: req.body.last_name,
 			email: req.body.email
 		}
-		console.log("Success!");
+		db.users.insert(newUser, function(err, result){
+			if(err){
+				console.log(err);
+			}
+			res.redirect('/');
+		})
 	}
 })
 

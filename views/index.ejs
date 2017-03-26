@@ -1,10 +1,17 @@
 <% include partials/header %>
 
+	<% if(errors != undefined){ %>
+			<ul>
+				<% errors.forEach(function(error){ %>
+						<li><%= error.msg %></li>
+				<%})%>
+			</ul>
+	<%}%>
 	<h1>Hello from ejs!</h1>
 	<h1> <%=title%> </h1>
 	<ul>
 		<% users.forEach(function(x){ %>
-			<li><%=x.first_name%> <%=x.last_name%> <br>Email: <%=x.email%></li>
+			<li><%=x.first_name%> <%=x.last_name%> <br>Email: <%=x.email%> - <a href="#" class="deleteUser">Delete</a></li>
 		<% })%>
 	</ul>
 
