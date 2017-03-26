@@ -12,6 +12,24 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static('public'));
 
+//Error Formatter
+app.use(expressValidator({
+  errorFormatter: function(param, msg, value) {
+      var namespace = param.split('.')
+      , root    = namespace.shift()
+      , formParam = root;
+
+    while(namespace.length) {
+      formParam += '[' + namespace.shift() + ']';
+    }
+    return {
+      param : formParam,
+      msg   : msg,
+      value : value
+    };
+  }
+}));
+
 var users = [
 	{
 		id: 1,
@@ -44,7 +62,22 @@ app.get('/', function(req, res){
 });
 
 app.post('/users/add', function(req, res){
+	var errors = req.validationErrors();
+	req.checkBody('first_name','First Name is Required').notEmpty();
+	req.checkBody('last_name','Last Name is Required').notEmpty();
+	req.checkBody('email','Email is Required').notEmpty();
 	console.log(req.body);
+
+	if(errors){
+		console.log("Errors");
+	} else {
+		var user = {
+			first_name: req.body.first_name,
+			last_name: req.body.last_name,
+			email: req.body.email
+		}
+		console.log("Success!");
+	}
 })
 
 
